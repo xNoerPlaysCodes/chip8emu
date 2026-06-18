@@ -12,8 +12,34 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIRECTORY})
 project(${PROJECT_NAME} CXX)
 # Set CMake Build Type
 set(CMAKE_BUILD_TYPE Debug)
-add_executable(${PROJECT_NAME}
-   src/main.cpp
+include(FetchContent)
+FetchContent_Declare(
+    rlimgui
+    GIT_REPOSITORY https://github.com/raylib-extras/rlImGui.git
+    GIT_TAG main
 )
-target_include_directories(${PROJECT_NAME} PRIVATE include)
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib spdlog fmt)
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG docking 
+)
+FetchContent_MakeAvailable(imgui)
+FetchContent_MakeAvailable(rlimgui)
+add_executable(${PROJECT_NAME}
+    ${rlimgui_SOURCE_DIR}/rlImGui.cpp
+    ${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
+    src/main.cpp
+)
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    include
+    ${imgui_SOURCE_DIR} 
+    ${rlimgui_SOURCE_DIR}
+)
+file(GLOB IMGUI_SRC
+    ${imgui_SOURCE_DIR}/*.cpp
+)
+
+add_library(imgui STATIC
+    ${IMGUI_SRC}
+)
+target_link_libraries(${PROJECT_NAME} PRIVATE raylib spdlog fmt imgui)

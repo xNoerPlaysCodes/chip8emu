@@ -11,10 +11,15 @@
 #include <raylib.h>
 #include <spdlog/spdlog.h>
 #include <string>
-#include <thread>
+
+#include "rlImGui.h"
+#include "imgui.h"
+#ifndef IMGUI_API
+#define IMGUI_API
+#endif
+#include "misc/cpp/imgui_stdlib.h"
 
 #include <cassert>
-#include <unordered_map>
 
 void raylib_spdlog_hook(int level, const char *text, va_list args) {
     spdlog::level::level_enum log_level = spdlog::level::trace;
@@ -34,7 +39,7 @@ void raylib_spdlog_hook(int level, const char *text, va_list args) {
 }
 
 
-// std::atomic<bool> play_audio
+// std::<bool> play_audio
 // std::thread g_timer_decr_thread;
 
 constexpr size_t fb_x = 64;
@@ -108,7 +113,7 @@ struct state_t {
     uint8_t v[16] = {};
 
     uint8_t sp = 0;
-    std::atomic<uint8_t> dt {}, st {};
+    uint8_t dt {}, st {};
 
     bool waiting_for_key = false;
     uint8_t key_in_reg = 255;
@@ -310,8 +315,8 @@ private:
     }
 
     void st_logic() noexcept {
-        static double last_time = GetTime();
-        double now = GetTime();
+        static float last_time = GetTime();
+        float now = GetTime();
 
         if (st == 0)
             return;
@@ -326,8 +331,8 @@ private:
     }
 
     void dt_logic() noexcept {
-        static double last_time = GetTime();
-        double now = GetTime();
+        static float last_time = GetTime();
+        float now = GetTime();
 
         if (dt == 0)
             return;
@@ -373,7 +378,7 @@ int main(int argc, char **argv) {
     SetTraceLogLevel(LOG_WARNING);
 
     std::string rom = "rom.ch8";
-    double tgt = 1200;
+    float tgt = 500;
 
     for (size_t i = 0; i < argc; ++i) {
         if (strcmp(argv[i], "--rom") == 0) {
@@ -396,9 +401,11 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(fb_x * scale, fb_y * scale, "chip8emu");
-
     SetTargetFPS(60);
+
+    rlImGuiSetup(true);
 
     state_t state;
     std::vector<uint8_t> data;
@@ -430,12 +437,18 @@ int main(int argc, char **argv) {
 
     state.init(data);
 
-    double acc = 0.0;
-    double last = GetTime();
+    float acc = 0.0;
+    float last = 0.0;
+
+    bool start = false;
+
+    RenderTexture2D rtex = LoadRenderTexture(fb_x * scale, fb_y * scale);
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-        ClearBackground(LIGHTGRAY);
+        ClearBackground(Color(26, 26, 26));
+        BeginTextureMode(rtex);
+        ClearBackground(Color(26, 26, 26));
         {
             auto palette = palettes[0];
             for (size_t y = 0; y < fb_y; ++y) {
@@ -444,17 +457,24 @@ int main(int argc, char **argv) {
                 }
             }
 
-            double now = GetTime();
-            double dt = now - last;
-            last = now;
+            if (start) {
+                if (last == 0.0) {
+                    last = GetTime();
+                }
+                float now = GetTime();
+                float dt = now - last;
+                last = now;
 
-            acc += dt;
+                acc += dt;
 
-            double step = 1. / tgt;
+                float step = 1. / tgt;
 
-            while (acc >= step) {
-                state.step();
-                acc -= step;
+                while (acc >= step) {
+                    state.step();
+                    acc -= step;
+                }
+            } else {
+                last = 0.0;
             }
 
             if (state.st > 0) {
@@ -462,7 +482,85 @@ int main(int argc, char **argv) {
                 // DrawRectangle(0, 0, 100, 100, RED);
             }
         }
+        EndTextureMode();
+
+        rlImGuiBegin();
+        ImGui::Begin("Emulator", nullptr, ImGuiWindowFlags_NoResize);
+        {
+            ImGui::SetWindowSize({ (float) fb_x * scale, (float) fb_y * scale });
+            ImGui::Image(rtex.texture.id, { (float) rtex.texture.width, (float) rtex.texture.height }, {0, 1}, {1, 0});
+        }
+        ImGui::End();
         DrawFPS(10, 10);
+        ImGui::Begin("Settings");
+        {
+            ImGui::SliderFloat("Speed", &tgt, 1.f, 1000.f, "%.1f");
+            ImGui::Checkbox("Started", &start);
+            int pc = state.pc;
+            ImGui::InputInt("Program Counter", &pc);
+            if (ImGui::BeginTable("stats", 4)) {
+                for (size_t i = 0; i < 16; ++i) {
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::Text("v%01X", (int) i);
+                    ImGui::TableNextColumn();
+                    ImGui::Text("0x%02X", state.v[i]);
+                }
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("I");
+                ImGui::TableNextColumn();
+                ImGui::Text("0x%03X", state.index);
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("ST");
+                ImGui::TableNextColumn();
+                ImGui::Text("%d", state.st);
+
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::Text("DT");
+                ImGui::TableNextColumn();
+                ImGui::Text("%d", state.dt);
+
+                ImGui::EndTable();
+
+                ImGui::InputText("ROM", &rom, ImGuiInputTextFlags_CallbackEdit, [](ImGuiInputTextCallbackData *idata) -> int {
+                    if (!std::filesystem::exists(idata->Buf) || !std::filesystem::is_regular_file(idata->Buf))
+                        return 1;
+                    std::vector<uint8_t> data;
+                    std::ifstream input(idata->Buf, std::ios::binary);
+
+                    input.seekg(0, std::ios::end);
+                    size_t sz = input.tellg();
+                    input.seekg(0, std::ios::beg);
+
+                    state_t *state = reinterpret_cast<state_t*>(idata->UserData);
+
+                    data.resize(sz);
+
+                    input.read(reinterpret_cast<char*>(data.data()), sz);
+
+                    input.close();
+
+                    spdlog::info("ROM CHANGE");
+
+                    state->init(data);
+                    state->pc = 0;
+                    memset(state->v, 0, 16);
+                    memset(state->fb, 0, sizeof(state->fb));
+
+                    return 0;
+                }, &state);
+            }
+            state.pc = pc;
+        }
+        ImGui::End();
+        rlImGuiEnd();
         EndDrawing();
     }
+
+    rlImGuiShutdown();
 }
