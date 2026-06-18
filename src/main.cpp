@@ -1,11 +1,20 @@
+#include "beep.h"
+
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <random>
 #include <raylib.h>
 #include <spdlog/spdlog.h>
+#include <string>
 #include <thread>
+
+#include <cassert>
+#include <unordered_map>
 
 void raylib_spdlog_hook(int level, const char *text, va_list args) {
     spdlog::level::level_enum log_level = spdlog::level::trace;
@@ -34,20 +43,41 @@ constexpr size_t fb_y = 32;
 size_t scale = 20;
 
 namespace binary_part {
-    struct first {
-        operator int() {
-            return 0;
-        }
-    };
-
-    struct second {
-        operator int() {
-            return 1;
-        }
-    };
+    constexpr int first = 0;
+    constexpr int second = 1;
 }
 
 using sprite_t = uint8_t[8];
+
+uint8_t rand_u8() {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<uint8_t> distrib;
+    return distrib(gen);
+}
+
+bool check_key(uint8_t key_index) {
+    static constexpr KeyboardKey keymap[16] = {
+        KEY_ZERO,
+        KEY_ONE,
+        KEY_TWO,
+        KEY_THREE,
+        KEY_FOUR,
+        KEY_FIVE,
+        KEY_SIX,
+        KEY_SEVEN,
+        KEY_EIGHT,
+        KEY_NINE,
+        KEY_A,
+        KEY_B,
+        KEY_C,
+        KEY_D,
+        KEY_E,
+        KEY_F
+    };
+
+    return IsKeyDown(keymap[key_index]);
+}
 
 constexpr sprite_t sprites[] = {
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
@@ -77,8 +107,11 @@ struct state_t {
 
     uint8_t v[16] = {};
 
-    uint8_t sp {};
+    uint8_t sp = 0;
     std::atomic<uint8_t> dt {}, st {};
+
+    bool waiting_for_key = false;
+    uint8_t key_in_reg = 255;
 
     bool fb[fb_x * fb_y] = {};
 private:
@@ -102,13 +135,26 @@ private:
     }
 
     void logic() noexcept {
+        if (waiting_for_key) {
+            for (uint8_t i = 0; i < 16; ++i) {
+                if (check_key(i)) {
+                    v[key_in_reg] = i;
+                    waiting_for_key = false;
+                    break;
+                }
+            }
+
+            return;
+        }
+
         uint16_t instr = read16(pc);
+        pc += 2;
 
         // p = part
-        uint8_t p0 = nibble(binary_part::first{}, instr >> 8);
-        uint8_t p1 = nibble(binary_part::second{}, instr >> 8);
-        uint8_t p2 = nibble(binary_part::first{}, instr & 0xFF);
-        uint8_t p3 = nibble(binary_part::second{}, instr & 0xFF);
+        uint8_t p0 = nibble(binary_part::first, instr >> 8);
+        uint8_t p1 = nibble(binary_part::second, instr >> 8);
+        uint8_t p2 = nibble(binary_part::first, instr & 0xFF);
+        uint8_t p3 = nibble(binary_part::second, instr & 0xFF);
 
         // b = byte
         uint8_t b0 = instr >> 8;
@@ -116,18 +162,38 @@ private:
 
         uint16_t last_12_bits = (p1 << 8) | b1;
 
-        bool auto_pc_increment = true;
-
         if (p0 == 0) {
             if (p2 == 0xE && p3 == 0) {
                 memset(this->fb, 0, fb_x * fb_y);
             } else if (p2 == 0xE && p3 == 0xE) {
-                pc = stack[sp--];
-                auto_pc_increment = false;
+                pc = stack[--sp];
             }
         } else if (p0 == 0x1) {
             pc = last_12_bits;
-            auto_pc_increment = false;
+        } else if (p0 == 0x2) {
+            stack[sp++] = pc;
+            pc = last_12_bits;
+        } else if (p0 == 0x3) {
+            uint8_t reg = p1;
+            uint8_t val = b1;
+
+            if (v[reg] == val) {
+                pc += 2;
+            }
+        } else if (p0 == 0x4) {
+            uint8_t reg = p1;
+            uint8_t val = b1;
+
+            if (v[reg] != val) {
+                pc += 2;
+            }
+        } else if (p0 == 0x5) {
+            uint8_t r1 = p1;
+            uint8_t r2 = p2;
+
+            if (v[r1] == v[r2]) {
+                pc += 2;
+            }
         } else if (p0 == 0x6) {
             uint8_t value = (p2 << 4) | p3;
             uint8_t &tgt_reg = v[p1];
@@ -136,8 +202,43 @@ private:
             uint8_t value = (p2 << 4) | p3;
             uint8_t &tgt_reg = v[p1];
             tgt_reg += value;
-        } else if (p0 == 0xA) {
+        } else if (p0 == 0x8) {
+            uint8_t &vx = v[p1];
+            uint8_t &vy = v[p2];
+            if (p3 == 0) {
+                vx = vy;
+            } else if (p3 == 1) {
+                vx |= vy;
+            } else if (p3 == 2) {
+                vx &= vy;
+            } else if (p3 == 3) {
+                vx ^= vy;
+            } else if (p3 == 4) {
+                vx += vy;
+            } else if (p3 == 5) {
+                v[0xf] = vx >= vy;
+                vx = vx - vy;
+            } else if (p3 == 6) {
+                v[0xf] = vx & 1;
+                vx >>= 1;
+            } else if (p3 == 7) {
+                v[0xf] = vx >= vy;
+                vx = vy - vx;
+            } else if (p3 == 0xE) {
+                v[0xf] = bitindex(0, vx);
+                vx <<= 1;
+            }
+        } else if (p0 == 0x9) {
+            if (v[p1] != v[p2]) {
+                pc += 2;
+            }
+        }
+        else if (p0 == 0xA) {
             this->index = last_12_bits;
+        } else if (p0 == 0xB) {
+            pc = last_12_bits + v[0];
+        } else if (p0 == 0xC) {
+            v[p1] = rand_u8() & b1;
         } else if (p0 == 0xD) {
             uint8_t x = v[p1];
             uint8_t y = v[p2];
@@ -145,7 +246,7 @@ private:
 
             v[0xf] = 0;
             for (uint16_t i = this->index; i < (this->index + n); ++i, ++y) {
-                uint8_t byte = this->mem[i];
+                uint8_t byte = read8(i);
                 for (uint8_t j = 0; j < 8; ++j, ++x) {
                     uint8_t bit = bitindex(j, byte);
                     size_t idx = (y % fb_y) * fb_x + (x % fb_x);
@@ -160,20 +261,84 @@ private:
                 }
                 x = v[p1];
             }
+        } else if (p0 == 0xE) {
+            if (b1 == 0x9E) {
+                if (check_key(v[p1])) {
+                    pc += 2;
+                }
+            } else if (b1 == 0xA1) {
+                if (!check_key(v[p1])) {
+                    pc += 2;
+                }
+            }
+        } else if (p0 == 0xF) {
+            uint8_t &vx = v[p1];
+            if (b1 == 0x07) {
+                vx = dt;
+            } else if (b1 == 0x0A) {
+                waiting_for_key = true;
+                key_in_reg = p1;
+            } else if (b1 == 0x15) {
+                dt = vx;
+            } else if (b1 == 0x18) {
+                st = vx;
+            } else if (b1 == 0x1E) {
+                index += vx;
+            } else if (b1 == 0x29) {
+                index = vx * 5; // TODO: May be broken
+            } else if (b1 == 0x33) {
+                write8(index + 0, vx / 100);
+                write8(index + 1, (vx / 10) % 10);
+                write8(index + 2, vx % 10);
+            } else if (b1 == 0x55) {
+                for (uint16_t i = 0; i <= p1; ++i) {
+                    write8(index + i, v[i]);
+                }
+
+                index += p1 + 1;
+            } else if (b1 == 0x65) {
+                for (uint16_t i = 0; i <= p1; ++i) {
+                    v[i] = read8(index + i);
+                }
+
+                index += p1 + 1;
+            }
         }
         else {
-            std::cout << "Unhandled Instruction: ";
-            std::cout << std::hex << (int) p0;
-            std::cout << std::hex << (int) p1;
-            std::cout << std::hex << (int) p2;
-            std::cout << std::hex << (int) p3;
-            std::cout << '\n';
+            spdlog::error("Unhandled Instruction: 0x{:x}{:x}{:x}{:x}", p0, p1, p2, p3);
+        }
+    }
+
+    void st_logic() noexcept {
+        static double last_time = GetTime();
+        double now = GetTime();
+
+        if (st == 0)
+            return;
+
+        if (now - last_time < (1./60.)) {
+            return;
         }
 
-        std::cout << pc << '\n';
+        last_time = now;
 
-        if (auto_pc_increment)
-            pc += 2;
+        --st;
+    }
+
+    void dt_logic() noexcept {
+        static double last_time = GetTime();
+        double now = GetTime();
+
+        if (dt == 0)
+            return;
+
+        if (now - last_time < (1./60.)) {
+            return;
+        }
+
+        last_time = now;
+
+        --dt;
     }
 public:
     void init(const std::vector<uint8_t> &prog) noexcept {
@@ -183,10 +348,7 @@ public:
         }
 
         memcpy(mem + 0x200, prog.data(), prog.size());
-        memcpy(mem, sprites, 5 * sizeof(sprites));
-        // for (size_t i = 0; i < 0x80; i += 5) {
-        //
-        // }
+        memcpy(mem, sprites, sizeof(sprites));
     }
 
     uint8_t nibble(int part, uint8_t byte) {
@@ -198,28 +360,50 @@ public:
     } 
 
     void step() noexcept {
-        static double last_time = GetTime();
-        double now = GetTime();
-        // if (now - last_time >= 0.1) {
-        //     last_time = now;
-            logic();
-        // }
+        logic();
+        st_logic();
+        dt_logic();
     }
 };
 
 int main(int argc, char **argv) {
+    spdlog::set_level(spdlog::level::trace);
     spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
     SetTraceLogCallback(raylib_spdlog_hook);
     SetTraceLogLevel(LOG_WARNING);
 
+    std::string rom = "rom.ch8";
+    double tgt = 1200;
+
+    for (size_t i = 0; i < argc; ++i) {
+        if (strcmp(argv[i], "--rom") == 0) {
+            if (i + 1 < argc) {
+                rom = argv[i + 1];
+            } else {
+                spdlog::error("--rom didn't get a value provided with it");
+            }
+        } else if (strcmp(argv[i], "--speed") == 0) {
+            if (i + 1 < argc) {
+                tgt = std::atoi(argv[i + 1]);
+            } else {
+                spdlog::error("--speed didn't get a value provided with it");
+            }
+        }
+    }
+
+    if (!std::filesystem::exists(rom)) {
+        spdlog::critical("Path: {} does not exist!", rom);
+        return 1;
+    }
+
     InitWindow(fb_x * scale, fb_y * scale, "chip8emu");
 
-    SetTargetFPS(60); // it lines up with the  CHIP-8's intended speed which is also 60 hz so that's nice!
+    SetTargetFPS(60);
 
     state_t state;
     std::vector<uint8_t> data;
     {
-        std::ifstream input("rom.ch8", std::ios::binary);
+        std::ifstream input(rom, std::ios::binary);
 
         input.seekg(0, std::ios::end);
         size_t sz = input.tellg();
@@ -230,19 +414,53 @@ int main(int argc, char **argv) {
         input.read(reinterpret_cast<char*>(data.data()), sz);
     }
 
+    spdlog::info("ROM Loaded: {}", rom);
+
+    using palette_t = Color[2];
+
+    palette_t palettes[] = {
+        {{153, 102, 1, 255}, {255, 204, 1, 255}},
+        {WHITE, BLACK},
+        {BLACK, GREEN}
+    };
+
+    InitAudioDevice();
+    Sound sound = LoadSoundFromWave(LoadWaveFromMemory(".ogg", beep_ogg, beep_ogg_len));
+    SetSoundVolume(sound, 1.f);
+
     state.init(data);
+
+    double acc = 0.0;
+    double last = GetTime();
 
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(LIGHTGRAY);
         {
+            auto palette = palettes[0];
             for (size_t y = 0; y < fb_y; ++y) {
                 for (size_t x = 0; x < fb_x; ++x) {
-                    DrawRectangle(x * scale, y * scale, scale, scale, state.fb[y * fb_x + x] == 0 ? WHITE : BLACK);
+                    DrawRectangle(x * scale, y * scale, scale, scale, state.fb[y * fb_x + x] == 0 ? palette[0] : palette[1]);
                 }
             }
 
-            state.step();
+            double now = GetTime();
+            double dt = now - last;
+            last = now;
+
+            acc += dt;
+
+            double step = 1. / tgt;
+
+            while (acc >= step) {
+                state.step();
+                acc -= step;
+            }
+
+            if (state.st > 0) {
+                PlaySound(sound);
+                // DrawRectangle(0, 0, 100, 100, RED);
+            }
         }
         DrawFPS(10, 10);
         EndDrawing();
