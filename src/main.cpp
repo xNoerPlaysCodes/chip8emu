@@ -21,6 +21,96 @@
 
 #include <cassert>
 
+void setup_imgui_style() {
+	// Excellency style by gonzaloivan121 from ImThemes
+	ImGuiStyle& style = ImGui::GetStyle();
+	
+	style.Alpha = 1.0f;
+	style.DisabledAlpha = 0.6f;
+	style.WindowPadding = ImVec2(10.0f, 10.0f);
+	style.WindowRounding = 0.0f;
+	style.WindowBorderSize = 1.0f;
+	style.WindowMinSize = ImVec2(32.0f, 32.0f);
+	style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
+	style.WindowMenuButtonPosition = ImGuiDir_None;
+	style.ChildRounding = 6.0f;
+	style.ChildBorderSize = 1.0f;
+	style.PopupRounding = 6.0f;
+	style.PopupBorderSize = 1.0f;
+	style.FramePadding = ImVec2(8.0f, 6.0f);
+	style.FrameRounding = 6.0f;
+	style.FrameBorderSize = 1.0f;
+	style.ItemSpacing = ImVec2(6.0f, 6.0f);
+	style.ItemInnerSpacing = ImVec2(4.0f, 4.0f);
+	style.CellPadding = ImVec2(4.0f, 2.0f);
+	style.IndentSpacing = 11.0f;
+	style.ColumnsMinSpacing = 6.0f;
+	style.ScrollbarSize = 14.0f;
+	style.ScrollbarRounding = 6.0f;
+	style.GrabMinSize = 10.0f;
+	style.GrabRounding = 6.0f;
+	style.TabRounding = 6.0f;
+	style.TabBorderSize = 1.0f;
+	style.TabMinWidthBase = 0.0f;
+	style.ColorButtonPosition = ImGuiDir_Right;
+	style.ButtonTextAlign = ImVec2(0.5f, 0.5f);
+	style.SelectableTextAlign = ImVec2(0.0f, 0.0f);
+	
+	style.Colors[ImGuiCol_Text] = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+	style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.5019608f, 0.5019608f, 0.5019608f, 1.0f);
+	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.08235294f, 0.08235294f, 0.08235294f, 1.0f);
+	style.Colors[ImGuiCol_ChildBg] = ImVec4(0.15686275f, 0.15686275f, 0.15686275f, 1.0f);
+	style.Colors[ImGuiCol_PopupBg] = ImVec4(0.19607843f, 0.19607843f, 0.19607843f, 1.0f);
+	style.Colors[ImGuiCol_Border] = ImVec4(0.101960786f, 0.101960786f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	style.Colors[ImGuiCol_FrameBg] = ImVec4(0.05882353f, 0.05882353f, 0.05882353f, 1.0f);
+	style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.09019608f, 0.09019608f, 0.09019608f, 1.0f);
+	style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.05882353f, 0.05882353f, 0.05882353f, 1.0f);
+	style.Colors[ImGuiCol_TitleBg] = ImVec4(0.08235294f, 0.08235294f, 0.08235294f, 1.0f);
+	style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.08235294f, 0.08235294f, 0.08235294f, 1.0f);
+	style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.15294118f, 0.15294118f, 0.15294118f, 1.0f);
+	style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.019607844f, 0.019607844f, 0.019607844f, 0.53f);
+	style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.30980393f, 0.30980393f, 0.30980393f, 1.0f);
+	style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.4117647f, 0.4117647f, 0.4117647f, 1.0f);
+	style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.50980395f, 0.50980395f, 0.50980395f, 1.0f);
+	style.Colors[ImGuiCol_CheckMark] = ImVec4(0.7529412f, 0.7529412f, 0.7529412f, 1.0f);
+	style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.50980395f, 0.50980395f, 0.50980395f, 0.7f);
+	style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.65882355f, 0.65882355f, 0.65882355f, 1.0f);
+	style.Colors[ImGuiCol_Button] = ImVec4(0.21960784f, 0.21960784f, 0.21960784f, 0.784f);
+	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.27450982f, 0.27450982f, 0.27450982f, 1.0f);
+	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.21960784f, 0.21960784f, 0.21960784f, 0.588f);
+	style.Colors[ImGuiCol_Header] = ImVec4(0.18431373f, 0.18431373f, 0.18431373f, 1.0f);
+	style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.18431373f, 0.18431373f, 0.18431373f, 1.0f);
+	style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.18431373f, 0.18431373f, 0.18431373f, 1.0f);
+	style.Colors[ImGuiCol_Separator] = ImVec4(0.101960786f, 0.101960786f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.15294118f, 0.7254902f, 0.9490196f, 0.588f);
+	style.Colors[ImGuiCol_SeparatorActive] = ImVec4(0.15294118f, 0.7254902f, 0.9490196f, 1.0f);
+	style.Colors[ImGuiCol_ResizeGrip] = ImVec4(0.9098039f, 0.9098039f, 0.9098039f, 0.25f);
+	style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.8117647f, 0.8117647f, 0.8117647f, 0.67f);
+	style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.45882353f, 0.45882353f, 0.45882353f, 0.95f);
+	style.Colors[ImGuiCol_Tab] = ImVec4(0.08235294f, 0.08235294f, 0.08235294f, 1.0f);
+	style.Colors[ImGuiCol_TabHovered] = ImVec4(1.0f, 0.88235295f, 0.5294118f, 0.118f);
+	style.Colors[ImGuiCol_TabActive] = ImVec4(1.0f, 0.88235295f, 0.5294118f, 0.235f);
+	style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.08235294f, 0.08235294f, 0.08235294f, 1.0f);
+	style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(1.0f, 0.88235295f, 0.5294118f, 0.118f);
+	style.Colors[ImGuiCol_PlotLines] = ImVec4(0.6117647f, 0.6117647f, 0.6117647f, 1.0f);
+	style.Colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.0f, 0.43137255f, 0.34901962f, 1.0f);
+	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.9019608f, 0.7019608f, 0.0f, 1.0f);
+	style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.0f, 0.6f, 0.0f, 1.0f);
+	style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.18431373f, 0.18431373f, 0.18431373f, 1.0f);
+	style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.30980393f, 0.30980393f, 0.34901962f, 1.0f);
+	style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.101960786f, 0.101960786f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.0f, 1.0f, 1.0f, 0.06f);
+	style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.15294118f, 0.7254902f, 0.9490196f, 0.35f);
+	style.Colors[ImGuiCol_DragDropTarget] = ImVec4(1.0f, 1.0f, 0.0f, 0.9f);
+	style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.15294118f, 0.7254902f, 0.9490196f, 0.8f);
+	style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.0f, 1.0f, 1.0f, 0.7f);
+	style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.2f);
+	style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
+}
+
 void raylib_spdlog_hook(int level, const char *text, va_list args) {
     spdlog::level::level_enum log_level = spdlog::level::trace;
     switch (level) {
@@ -375,10 +465,10 @@ int main(int argc, char **argv) {
     spdlog::set_level(spdlog::level::trace);
     spdlog::set_pattern("[%H:%M:%S] [%^%l%$] %v");
     SetTraceLogCallback(raylib_spdlog_hook);
-    SetTraceLogLevel(LOG_WARNING);
+    SetTraceLogLevel(LOG_INFO);
 
     std::string rom = "rom.ch8";
-    float tgt = 500;
+    float tgt = 660;
 
     for (size_t i = 0; i < argc; ++i) {
         if (strcmp(argv[i], "--rom") == 0) {
@@ -407,6 +497,8 @@ int main(int argc, char **argv) {
 
     rlImGuiSetup(true);
 
+    setup_imgui_style();
+
     state_t state;
     std::vector<uint8_t> data;
     {
@@ -423,13 +515,7 @@ int main(int argc, char **argv) {
 
     spdlog::info("ROM Loaded: {}", rom);
 
-    using palette_t = Color[2];
-
-    palette_t palettes[] = {
-        {{153, 102, 1, 255}, {255, 204, 1, 255}},
-        {WHITE, BLACK},
-        {BLACK, GREEN}
-    };
+    using palette_t = std::array<Color, 2>;
 
     InitAudioDevice();
     Sound sound = LoadSoundFromWave(LoadWaveFromMemory(".ogg", beep_ogg, beep_ogg_len));
@@ -444,13 +530,16 @@ int main(int argc, char **argv) {
 
     RenderTexture2D rtex = LoadRenderTexture(fb_x * scale, fb_y * scale);
 
+    // const palette_t default_palette = {153, 102, 1, 255, 255, 204, 1, 255};
+    const palette_t default_palette = {0, 0, 0, 255, 255, 255, 255, 255};
+    palette_t palette = default_palette;
+
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(Color(26, 26, 26));
         BeginTextureMode(rtex);
         ClearBackground(Color(26, 26, 26));
         {
-            auto palette = palettes[0];
             for (size_t y = 0; y < fb_y; ++y) {
                 for (size_t x = 0; x < fb_x; ++x) {
                     DrawRectangle(x * scale, y * scale, scale, scale, state.fb[y * fb_x + x] == 0 ? palette[0] : palette[1]);
@@ -478,19 +567,34 @@ int main(int argc, char **argv) {
             }
 
             if (state.st > 0) {
-                PlaySound(sound);
+                if (!IsSoundPlaying(sound))
+                    PlaySound(sound);
                 // DrawRectangle(0, 0, 100, 100, RED);
             }
         }
         EndTextureMode();
 
         rlImGuiBegin();
-        ImGui::Begin("Emulator", nullptr, ImGuiWindowFlags_NoResize);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::Begin("Emulator", nullptr, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         {
+            // ImGui::SetWindowSize({ (float) fb_x * scale, (float) fb_y * scale });
+            ImGui::Image(rtex.texture.id, { (float) rtex.texture.width + 1, (float) rtex.texture.height + 1 }, {0, 1}, {1, 0});
+            auto window_sz = ImGui::GetWindowSize();
+            if (window_sz.x > fb_x * scale && window_sz.y > fb_y * scale) {
+                ++scale;
+                UnloadRenderTexture(rtex);
+                rtex = LoadRenderTexture(fb_x * scale, fb_y * scale);
+            } else if (window_sz.x < fb_x * scale && window_sz.y < fb_y * scale) {
+                --scale;
+                UnloadRenderTexture(rtex);
+                rtex = LoadRenderTexture(fb_x * scale, fb_y * scale);
+            }
+
             ImGui::SetWindowSize({ (float) fb_x * scale, (float) fb_y * scale });
-            ImGui::Image(rtex.texture.id, { (float) rtex.texture.width, (float) rtex.texture.height }, {0, 1}, {1, 0});
         }
         ImGui::End();
+        ImGui::PopStyleVar();
         DrawFPS(10, 10);
         ImGui::Begin("Settings");
         {
@@ -554,6 +658,59 @@ int main(int argc, char **argv) {
 
                     return 0;
                 }, &state);
+
+                static float colorpicker_out_1[3] = { default_palette[0].r / 255.f, default_palette[0].g / 255.f, default_palette[0].b / 255.f };
+                static float colorpicker_out_2[3] = { default_palette[1].r / 255.f, default_palette[1].g / 255.f, default_palette[1].b / 255.f };
+                static bool color_picker_1 = false;
+                static bool color_picker_2 = false;
+                if (ImGui::Button("Set Color 1")) {
+                    color_picker_1 = true;
+                }
+                if (ImGui::Button("Set Color 2")) {
+                    color_picker_2 = true;
+                }
+                if (color_picker_1) {
+                    ImGui::OpenPopup("Color Picker");
+
+                    if (ImGui::BeginPopupModal("Color Picker", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+                        ImGui::Text("Choose color 1");
+
+                        ImGui::ColorPicker3("Picker", colorpicker_out_1);
+
+                        if (ImGui::Button("Close")) {
+                            color_picker_1 = false;
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndPopup();
+                    }
+                }
+                if (color_picker_2) {
+                    ImGui::OpenPopup("Color Picker");
+
+                    if (ImGui::BeginPopupModal("Color Picker", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+                        ImGui::Text("Choose color 2");
+
+                        ImGui::ColorPicker3("Picker", colorpicker_out_2);
+
+                        if (ImGui::Button("Close")) {
+                            color_picker_2 = false;
+                            ImGui::CloseCurrentPopup();
+                        }
+
+                        ImGui::EndPopup();
+                    }
+                }
+
+
+
+                palette[0].r = colorpicker_out_1[0] * 255;
+                palette[0].g = colorpicker_out_1[1] * 255;
+                palette[0].b = colorpicker_out_1[2] * 255;
+
+                palette[1].r = colorpicker_out_2[0] * 255;
+                palette[1].g = colorpicker_out_2[1] * 255;
+                palette[1].b = colorpicker_out_2[2] * 255;
             }
             state.pc = pc;
         }
