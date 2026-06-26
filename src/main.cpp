@@ -20,6 +20,7 @@
 #include "misc/cpp/imgui_stdlib.h"
 
 #include <cassert>
+#include <array>
 
 void setup_imgui_style() {
 	// Excellency style by gonzaloivan121 from ImThemes
@@ -147,8 +148,8 @@ using sprite_t = uint8_t[8];
 uint8_t rand_u8() {
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    static std::uniform_int_distribution<uint8_t> distrib;
-    return distrib(gen);
+    static std::uniform_int_distribution<int> distrib;
+    return static_cast<uint8_t>(distrib(gen));
 }
 
 bool check_key(uint8_t key_index) {

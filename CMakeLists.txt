@@ -4,7 +4,8 @@
 cmake_minimum_required(VERSION 3.30)
 set(PROJECT_NAME chip8emu)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(BINARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIRECTORY})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${BINARY_OUTPUT_DIRECTORY})
@@ -21,10 +22,28 @@ FetchContent_Declare(
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG docking 
+    GIT_TAG master 
+)
+FetchContent_Declare(
+    raylib
+    GIT_REPOSITORY https://github.com/raysan5/raylib.git
+    GIT_TAG master
+)
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.x
+)
+FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG main
 )
 FetchContent_MakeAvailable(imgui)
 FetchContent_MakeAvailable(rlimgui)
+FetchContent_MakeAvailable(raylib)
+FetchContent_MakeAvailable(spdlog)
+FetchContent_MakeAvailable(fmt)
 add_executable(${PROJECT_NAME}
     ${rlimgui_SOURCE_DIR}/rlImGui.cpp
     ${imgui_SOURCE_DIR}/misc/cpp/imgui_stdlib.cpp
@@ -34,9 +53,14 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     include
     ${imgui_SOURCE_DIR} 
     ${rlimgui_SOURCE_DIR}
+    ${raylib_SOURCE_DIR}
 )
 file(GLOB IMGUI_SRC
     ${imgui_SOURCE_DIR}/*.cpp
+)
+
+file(GLOB RAYLIB_SRC
+    ${raylib_SOURCE_DIR}/*.c
 )
 
 add_library(imgui STATIC
